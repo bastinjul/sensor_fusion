@@ -8,7 +8,9 @@ args = erl.rtems -- -mode embedded -home . -pa . -root {{release_name}} -config 
 {{#env.WIFI}}
 ip_self = dhcp
 wlan = enable
-hostname = my_grisp_board
+{{#env.NAME}}
+hostname = {{env.NAME}}
+{{/env.NAME}}
 wpa = wpa_supplicant.conf
 {{/env.WIFI}}
 
