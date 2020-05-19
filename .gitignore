@@ -16,3 +16,12 @@ deps
 _build/
 _checkouts/
 rebar3.crashdump
+
+#logs
+logs/
+measures/
+calculations/
+
+#idea
+.idea/
+*.iml
