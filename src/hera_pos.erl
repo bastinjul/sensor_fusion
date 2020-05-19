@@ -11,7 +11,7 @@
 %%% Created : 02. May 2020 2:22 AM
 %%%-------------------------------------------------------------------
 
--module(hera_position).
+-module(hera_pos).
 -author("Julien Bastin <julien.bastin@student.uclouvain.be>, Guillaume Neirinckx <guillaume.neirinckx@student.uclouvain.be>").
 
 -export([launch_hera/1]).
