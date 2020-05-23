@@ -3,10 +3,10 @@
 %%% @author Guillaume Neirinckx <guillaume.neirinckx@student.uclouvain.be>
 %%% @copyright (C) 2020, <COMPANY>
 %%% @doc
-%%% Module which includes all the functions related to our user case.
-%%% Our user case consists in calculating the position of a move person in an empty room in realtime
-%%% using GRiSP boards with Digilent PmodMAXSONAR.
-%%% @reference See <a href="https://grisp.org/" target="_blank">GRiSP site</a> and <a href="https://store.digilentinc.com/pmodmaxsonar-maxbotix-ultrasonic-range-finder/" target="_blank">Digilent site</a> for more information
+%%% Module that includes all the functions related to our use case.
+%%% Our use case consists of calculating the position of a moving person in an empty room in real-time
+%%% using GRiSP boards with Digilent Pmod MAXSONAR sensor modules.
+%%% @reference See <a href="https://grisp.org/" target="_blank">GRiSP website</a> and <a href="https://store.digilentinc.com/pmodmaxsonar-maxbotix-ultrasonic-range-finder/" target="_blank">Digilent Pmod MAXSONAR reference</a> for more information
 %%% @end
 %%% Created : 02. May 2020 2:22 AM
 %%%-------------------------------------------------------------------
