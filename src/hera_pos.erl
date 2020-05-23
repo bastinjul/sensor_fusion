@@ -5,8 +5,8 @@
 %%% @doc
 %%% Module which includes all the functions related to our user case.
 %%% Our user case consists in calculating the position of a move person in an empty room in realtime
-%%% using GRiSP boards with Diligent pmod_maxsonar.
-%%% @reference See <a href="https://grisp.org/" target="_blank">GRiSP site</a> and <a href="https://store.digilentinc.com/pmodmaxsonar-maxbotix-ultrasonic-range-finder/" target="_blank">Diligent site</a> for more information
+%%% using GRiSP boards with Digilent PmodMAXSONAR.
+%%% @reference See <a href="https://grisp.org/" target="_blank">GRiSP site</a> and <a href="https://store.digilentinc.com/pmodmaxsonar-maxbotix-ultrasonic-range-finder/" target="_blank">Digilent site</a> for more information
 %%% @end
 %%% Created : 02. May 2020 2:22 AM
 %%%-------------------------------------------------------------------
