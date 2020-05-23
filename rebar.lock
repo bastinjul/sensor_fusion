@@ -6,7 +6,7 @@
  {<<"grisp">>,{pkg,<<"grisp">>,<<"1.2.0">>},0},
  {<<"hera">>,
   {git,"https://github.com/guiste10/hera.git",
-       {ref,"117a739ad2f15b4090f586a20e64b39900586662"}},
+       {ref,"8facaee1d2a90da13cd8efdbf850454c8ecc99b9"}},
   0},
  {<<"mapz">>,{pkg,<<"mapz">>,<<"0.3.0">>},1}]}.
 [

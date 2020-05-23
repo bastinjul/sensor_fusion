@@ -5,16 +5,7 @@ image_path = /media/mmcsd-0-0/{{release_name}}/erts-{{erts_vsn}}/bin/beam.bin
 args = erl.rtems -- -mode embedded -home . -pa . -root {{release_name}} -config {{release_name}}/releases/{{release_version}}/sys.config -boot {{release_name}}/releases/{{release_version}}/{{release_name}} -internal_epmd epmd_sup -kernel inetrc "./erl_inetrc" -sname {{release_name}} -setcookie MyCookie
 
 [network]
-{{#env.WIFI}}
-ip_self = dhcp
-wlan = enable
-{{#env.NAME}}
-hostname = {{env.NAME}}
-{{/env.NAME}}
-wpa = wpa_supplicant.conf
-{{/env.WIFI}}
 
-{{#env.ADHOC}}
 wlan=enable
 {{#env.IP}}
 ip_self={{env.IP}}
@@ -26,4 +17,3 @@ wlan_channel=6
 {{#env.NAME}}
 hostname={{env.NAME}}
 {{/env.NAME}}
-{{/env.ADHOC}}

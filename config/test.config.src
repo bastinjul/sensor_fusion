@@ -1,4 +1,4 @@
-{kernel, [
+[{kernel, [
   {logger_level, all},
   {logger, [
         %% Console logger
