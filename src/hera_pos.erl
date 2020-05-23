@@ -1,7 +1,6 @@
 %%%-------------------------------------------------------------------
 %%% @author Julien Bastin <julien.bastin@student.uclouvain.be>
 %%% @author Guillaume Neirinckx <guillaume.neirinckx@student.uclouvain.be>
-%%% @copyright (C) 2020, <COMPANY>
 %%% @doc
 %%% Module that includes all the functions related to our use case.
 %%% Our use case consists of calculating the position of a moving person in an empty room in real-time
