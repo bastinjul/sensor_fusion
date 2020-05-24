@@ -1,0 +1,8 @@
+my_grisp_board_1 : position = (200,160), dist réelle : 75
+my_grisp_board_2 : position = (0,160), dist réelle : 148
+my_grisp_board_3 : position = (200,0), dist réelle : 90
+my_grisp_board_4 : position = (0,0), dist réelle : 150
+
+
+
+Position approximative : (140,95)

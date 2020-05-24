@@ -19,9 +19,13 @@ rebar3.crashdump
 
 #logs
 logs/
-measures/
-calculations/
+./measures/
+./calculations/
 
 #idea
 .idea/
 *.iml
+
+#experiments
+*.idx
+*.siz
