@@ -1,0 +1,15 @@
+positions x,y:
+board 1 -> 0,0
+board 2 -> 0,378
+board 3 -> 267,378
+
+real distance to target:
+
+board 1 -> 246cm
+board 2 -> 183cm
+board 3 -> 205cm
+
+target: moi (35cmx20cm)
+real target position:
+
+center of me = 151,223 
