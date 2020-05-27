@@ -5,11 +5,18 @@ board 3 -> 267,378
 
 real distance to target:
 
-board 1 -> 246cm
-board 2 -> 183cm
+board 1 -> 244cm
+board 2 -> 193cm
 board 3 -> 205cm
 
-target: moi (35cmx20cm)
+
+target: moi (35cmx30cm)
+
 real target position:
 
-center of me = 151,223 
+y = [205,245]  
+x = [132,172]
+
+center of target = 152,225
+
+idem pour bacs de bière
