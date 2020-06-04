@@ -14,6 +14,7 @@ start(_Type, _Args) ->
     {ok, Supervisor} = sensor_fusion_sup:start_link(),
     LEDs = [1, 2],
     [grisp_led:color(L, red) || L <- LEDs],
+    pmod_maxsonar:set_mode(single),
     {ok, Supervisor}.
 
 stop(_State) -> ok.

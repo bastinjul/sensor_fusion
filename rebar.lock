@@ -3,14 +3,16 @@
   {git,"https://github.com/erlang/epmd",
        {ref,"4d1a595b9d5c32fc0e55f462da381de62de23bf0"}},
   0},
- {<<"grisp">>,{pkg,<<"grisp">>,<<"1.2.0">>},0},
+ {<<"grisp">>,
+  {git,"https://github.com/bastinjul/grisp.git",
+       {ref,"db04da7631114b9391cb6c7b40c9d657f12da3cb"}},
+  0},
  {<<"hera">>,
   {git,"https://github.com/guiste10/hera.git",
-       {ref,"8facaee1d2a90da13cd8efdbf850454c8ecc99b9"}},
+       {ref,"88b188d7acfd0879b5e4089b95ab116439ee370d"}},
   0},
  {<<"mapz">>,{pkg,<<"mapz">>,<<"0.3.0">>},1}]}.
 [
 {pkg_hash,[
- {<<"grisp">>, <<"9F3C556D24E9D2D77E75CC233A1C40D676D847AAD5BBDEC65EC1B216DB85C62D">>},
  {<<"mapz">>, <<"438D24746CE5A252101E00B2032EFDF7FC69EB32689D3B805DE5E6DD7F52614F">>}]}
 ].
