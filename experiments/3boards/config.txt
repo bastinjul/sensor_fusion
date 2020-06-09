@@ -1,0 +1,10 @@
+node 1: 300,10
+node 2: 0,0
+node 3: 170,315
+
+center of me: +-215,180
+
+dist to me:
+node 1 = 180cm
+node 2 = 235cm
+node 3 = 155cm
