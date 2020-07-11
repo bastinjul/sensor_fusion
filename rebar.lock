@@ -5,11 +5,11 @@
   0},
  {<<"grisp">>,
   {git,"https://github.com/bastinjul/grisp.git",
-       {ref,"db04da7631114b9391cb6c7b40c9d657f12da3cb"}},
+       {ref,"a1e3f2c21f88f7d8978caa68373839d679dae326"}},
   0},
  {<<"hera">>,
   {git,"https://github.com/guiste10/hera.git",
-       {ref,"88b188d7acfd0879b5e4089b95ab116439ee370d"}},
+       {ref,"57d7f003d75c3c2089035ddde10925f749162eda"}},
   0},
  {<<"mapz">>,{pkg,<<"mapz">>,<<"0.3.0">>},1}]}.
 [
