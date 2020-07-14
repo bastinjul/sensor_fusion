@@ -1,0 +1,19 @@
+positions x,y:
+board 1 -> 0,0
+board 2 -> 0,378
+
+real distance to target:
+
+board 1 -> 244cm
+board 2 -> 193cm
+
+target: moi (35cmx30cm)
+
+real target position:
+
+y = [205,245]  
+x = [132,172]
+
+center of target = 152,225
+
+idem pour bacs de bière

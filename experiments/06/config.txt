@@ -1,0 +1,4 @@
+my_grisp_board_1 : position = (200,160), dist réelle : 140
+my_grisp_board_2 : position = (0,160), dist réelle : 64
+my_grisp_board_3 : position = (200,0), dist réelle : 167
+my_grisp_board_4 : position = (0,0), dist réelle : 102 --> mais p-e hors portée, trop décalé

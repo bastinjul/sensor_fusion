@@ -25,3 +25,7 @@ calculations/
 #idea
 .idea/
 *.iml
+
+#experiments
+*.idx
+*.siz

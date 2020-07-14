@@ -1,0 +1,7 @@
+my_grisp_board_1 : position = (200,160)
+my_grisp_board_2 : position = (0,160)
+my_grisp_board_3 : position = (200,0)
+my_grisp_board_4 : position = (0,0)
+
+Moi en mouvement random, freq = 100ms, pas là au début
+
