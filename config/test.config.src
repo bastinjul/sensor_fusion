@@ -1,4 +1,17 @@
-[{kernel, [
+[
+{hera_synchronization, [
+    {measurements, [{sonar, true}, {pos, false}]}
+  ]},
+
+{kernel, [
+    %% put all nodes here
+    {distributed, [{hera_synchronization, 2000, [sensor_fusion@my_grisp_board_1, {sensor_fusion@my_grisp_board_2, sensor_fusion@my_grisp_board_3}]}]},
+    %% put all nodes here
+    {sync_nodes_mandatory, [sensor_fusion@my_grisp_board_1, sensor_fusion@my_grisp_board_2, sensor_fusion@my_grisp_board_3]},
+    %% put computer node here
+    {sync_nodes_optional, [sensor_fusion@julienbastin]},
+    {sync_nodes_timeout, infinity},
+
   {logger_level, all},
   {logger, [
         %% Console logger

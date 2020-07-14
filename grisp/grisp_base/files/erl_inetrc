@@ -1,7 +1,7 @@
 %--- Erlang Inet Configuration -------------------------------------------------
 
 % Add hosts
-{host, {169,254,126,125}, ["julienbastin"]},
+{host, {169,254,126,125}, ["julienbastin"]}.
 {host, {169,254,16,1}, ["my_grisp_board_1"]}.
 {host, {169,254,16,2}, ["my_grisp_board_2"]}.
 {host, {169,254,16,3}, ["my_grisp_board_3"]}.

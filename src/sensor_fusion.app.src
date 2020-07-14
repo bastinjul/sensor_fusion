@@ -7,8 +7,7 @@
         kernel,
         stdlib,
         grisp,
-        hera,
-        hera_synchronization
+        hera
     ]},
     {env,[]},
     {modules, []},
