@@ -9,11 +9,11 @@
   0},
  {<<"hera">>,
   {git,"https://github.com/guiste10/hera.git",
-       {ref,"69a445f33d7a4d365070f8901d1362fcc7a37bf2"}},
+       {ref,"203243bce0d21c0bf37fc8eadcb5bf459251c343"}},
   0},
  {<<"hera_synchronization">>,
   {git,"https://github.com/bastinjul/hera_synchronization",
-       {ref,"5eafb073852eda0ab4edeed7708dc0a9fb5c4fa5"}},
+       {ref,"e75f5b4eb078bfbb995b0e6d6e8d699f9cef2c87"}},
   0},
  {<<"mapz">>,{pkg,<<"mapz">>,<<"0.3.0">>},1}]}.
 [
