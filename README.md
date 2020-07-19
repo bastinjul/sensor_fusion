@@ -20,7 +20,9 @@ hostname={{env.NAME}}
 {{/env.NAME}}
 ```
 
-### Connect to boards via wifi
+If you don't know how to connect to this adhoc network using Linux, you can follow you [tutorial](./resources/SHELL_AD-HOC_CONNECTION.md).
+
+### Connect to boards via existing wifi network
 You need to put in the [grisp.ini.mustache](./grisp/grisp_base/files/grisp.ini.mustache) file these lines behind `[network]`:
 
 ```
@@ -35,6 +37,28 @@ wpa = wpa_supplicant.conf
 You also need to modify the file [wpa_supplicant.conf](./grisp/grisp_base/files/wpa_supplicant.conf) and put the information relative to your network.
 
 ## Deployment
+
+### Deployment on sd card
+
+In order to deploy our application on GRiSP boards, you need first to deploy it on a sd card. You must specify the path to this sd card inside the [rebar.config](./README.md) file, after the key `deploy`:
+```
+{ grisp , [
+	{otp , [
+		{version , "22.0"}
+	]} ,
+	
+	%% Example : running on a linux host with username "user" :
+	{deploy , [
+		{pre_script , "rm -rf /media/user/GRISP/*"} ,
+		{destination , "/media/user/GRISP"} ,
+		{post_script , "umount /media/user/GRISP"}
+    ]}
+]}.
+``` 
+We already put the paths for Mac and Linux users.
+
+If you want to format correctly your sd carte, you can follow our [tutorial](./resources/format_sd_card.md).
+
 The command to deploy on the grisp is : 
 
 ```
