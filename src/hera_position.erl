@@ -21,6 +21,7 @@
 -export([restart_measurement/1]).
 -export([restart/2]).
 -export([sonar_measurement/0]).
+-export([test_speed_udp/3]).
 %%====================================================================
 %% Macros
 %%====================================================================
@@ -85,6 +86,20 @@ restart_calculation(Frequency, MaxIterations) ->
 restart_measurement(MaxIterations) ->
     hera:restart_measurement(pos, false),
     hera:restart_sync_measurement(sonar, MaxIterations, false).
+
+test_speed_udp(Iter, Max, Frequency) ->
+    timer:sleep(Frequency),
+    if
+        Iter == 0 ->
+            logger:notice("Start experiment with frequency of send packet ~p", [Frequency]),
+            hera:send({test_speed_udp,  Iter}),
+            test_speed_udp(Iter+1, Max, Frequency);
+        Iter < Max ->
+            hera:send({test_speed_udp,  Iter}),
+            test_speed_udp(Iter+1, Max, Frequency);
+        true -> terminated
+    end.
+
 
 %%%===================================================================
 %%% Internal functions
@@ -297,7 +312,7 @@ same_target({X1, Y1}, {X2, Y2}) ->
 
 
 
-neighbors(NodeId, {_, #{node_id := Id}}) ->
+neighbors(NodeId, {_, #{node_id := Id}, _}) ->
     if
         Id =:= NodeId -> true;
         Id =:= (NodeId + 4 + 1) rem 4 -> true;

@@ -66,3 +66,5 @@ NAME=<hostname> IP=X.X.X.X rebar3 grisp deploy -n sensor_fusion -v 0.1.0
 ``` 
 
 If you are using Wifi network, you do not need to put the `IP=X.X.X.X`.
+
+> all the information concerning the grisp configuration files comes from [grisp wiki](https://github.com/grisp/grisp/wiki/Connecting-over-WiFI) 
