@@ -1,0 +1,5 @@
+sleeping bag above the stick. Form approximatively a rectangle of 40x20cm at position (x,y) = (230,190)
+
+analyse : only detected by board 1 and 2. the long side of the object is directed towards boards 1 and 3.
+
+Only board 2 calculated very well the position

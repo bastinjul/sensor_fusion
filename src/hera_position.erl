@@ -21,7 +21,7 @@
 -export([restart_measurement/1]).
 -export([restart/2]).
 -export([sonar_measurement/0]).
--export([test_speed_udp/3]).
+-export([filter_position/5]).
 %%====================================================================
 %% Macros
 %%====================================================================
@@ -48,31 +48,31 @@
 %%
 %%--------------------------------------------------------------------
 
--spec launch_hera(PosX :: integer(), PosY :: integer(), NodeId :: integer(), MaxX :: integer(), MaxY :: integer()) -> any().
-launch_hera(PosX, PosY, NodeId, MaxX, MaxY) ->
+-spec launch_hera(PosX :: integer(), PosY :: integer(), NodeId :: integer(), {MinX :: integer(), MinY :: integer()}, {MaxX :: integer(), MaxY :: integer()}) -> any().
+launch_hera(PosX, PosY, NodeId, {MinX, MinY}, {MaxX, MaxY}) ->
     pmod_maxsonar:set_mode(single),
     Measurements = [
-        hera:get_synchronized_measurement(sonar, fun() -> sonar_measurement() end, true, 0.14, infinity),
-        hera:get_unsynchronized_measurement(pos, fun() -> {ok, #{x => PosX, y => PosY, node_id => NodeId}} end, false, 0.28, 3, 500)
+        hera:get_synchronized_measurement(sonar, fun() -> sonar_measurement() end, fun(CurrVal, PrevVal, TimeDiff, UpperBound, DefaultMeas) -> filter_sonar(CurrVal, PrevVal, TimeDiff, UpperBound, DefaultMeas) end, 0.14, infinity),
+        hera:get_unsynchronized_measurement(pos, fun() -> {ok, #{x => PosX, y => PosY, node_id => NodeId}} end, undefined, 0.28, 3, 500)
     ],
-    Calculations = [hera:get_calculation(position, fun() -> calc_position(NodeId, MaxX, MaxY) end, 50, infinity)],
+    Calculations = [hera:get_calculation(position, fun() -> calc_position(NodeId, {MinX, MinY}, {MaxX, MaxY}) end, 50, infinity, fun(CurrVal, PrevVal, TimeDiff, UpperBound, Args) -> filter_position(CurrVal, PrevVal, TimeDiff, UpperBound, Args) end, 0.28)],
     hera:launch_app(Measurements, Calculations).
 
-launch_hera(PosX, PosY, NodeId, MaxIteration, MaxX, MaxY) ->
+launch_hera(PosX, PosY, NodeId, MaxIteration, {MinX, MinY}, {MaxX, MaxY}) ->
     pmod_maxsonar:set_mode(single),
     Measurements = [
-        hera:get_synchronized_measurement(sonar, fun() -> sonar_measurement() end, true, 0.14, MaxIteration),
-        hera:get_unsynchronized_measurement(pos, fun() -> {ok, #{x => PosX, y => PosY, node_id => NodeId}} end, false, 0.28, 3, 500)
+        hera:get_synchronized_measurement(sonar, fun() -> sonar_measurement() end, fun(CurrVal, PrevVal, TimeDiff, UpperBound, DefaultMeas) -> filter_sonar(CurrVal, PrevVal, TimeDiff, UpperBound, DefaultMeas) end, 0.14, MaxIteration),
+        hera:get_unsynchronized_measurement(pos, fun() -> {ok, #{x => PosX, y => PosY, node_id => NodeId}} end, undefined, 0.28, 3, 500)
     ],
-    Calculations = [hera:get_calculation(position, fun() -> calc_position(NodeId, MaxX, MaxY) end, 50, MaxIteration)],
+    Calculations = [hera:get_calculation(position, fun() -> calc_position(NodeId, {MinX, MinY}, {MaxX, MaxY}) end, 50, MaxIteration, fun(CurrVal, PrevVal, TimeDiff, UpperBound, Args) -> filter_position(CurrVal, PrevVal, TimeDiff, UpperBound, Args) end, 0.28)],
     hera:launch_app(Measurements, Calculations).
 
-launch_hera(PosX, PosY, NodeId, Frequency, MaxIteration, MaxX, MaxY) ->
+launch_hera(PosX, PosY, NodeId, Frequency, MaxIteration, {MinX, MinY}, {MaxX, MaxY}) ->
     Measurements = [
-        hera:get_unsynchronized_measurement(sonar, fun() -> sonar_measurement() end, true, 0.14, MaxIteration, Frequency),
-        hera:get_unsynchronized_measurement(pos, fun() -> {ok, #{x => PosX, y => PosY, node_id => NodeId}} end, false, 0.28, 3, 500)
+        hera:get_unsynchronized_measurement(sonar, fun() -> sonar_measurement() end, fun(CurrVal, PrevVal, TimeDiff, UpperBound, DefaultMeas) -> filter_sonar(CurrVal, PrevVal, TimeDiff, UpperBound, DefaultMeas) end, 0.14, MaxIteration, Frequency),
+        hera:get_unsynchronized_measurement(pos, fun() -> {ok, #{x => PosX, y => PosY, node_id => NodeId}} end, undefined, 0.28, 3, 500)
     ],
-    Calculations = [hera:get_calculation(position, fun() -> calc_position(NodeId, MaxX, MaxY) end, 50, MaxIteration)],
+    Calculations = [hera:get_calculation(position, fun() -> calc_position(NodeId, {MinX, MinY}, {MaxX, MaxY}) end, 50, MaxIteration, fun(CurrVal, PrevVal, TimeDiff, UpperBound, Args) -> filter_position(CurrVal, PrevVal, TimeDiff, UpperBound, Args) end, 0.28)],
     %Calculations = [], % no calculation
     hera:launch_app(Measurements, Calculations).
 
@@ -87,19 +87,6 @@ restart_measurement(MaxIterations) ->
     hera:restart_measurement(pos, false),
     hera:restart_sync_measurement(sonar, MaxIterations, false).
 
-test_speed_udp(Iter, Max, Frequency) ->
-    timer:sleep(Frequency),
-    if
-        Iter == 0 ->
-            logger:notice("Start experiment with frequency of send packet ~p", [Frequency]),
-            hera:send({test_speed_udp,  Iter}),
-            test_speed_udp(Iter+1, Max, Frequency);
-        Iter < Max ->
-            hera:send({test_speed_udp,  Iter}),
-            test_speed_udp(Iter+1, Max, Frequency);
-        true -> terminated
-    end.
-
 
 %%%===================================================================
 %%% Internal functions
@@ -113,17 +100,15 @@ sonar_measurement() ->
     end.
 
 
-calc_position(NodeId, MaxX, MaxY) -> % todo remove nodeId if not using neighbours
+calc_position(NodeId, {MinX, MinY}, {MaxX, MaxY}) -> % todo remove nodeId if not using neighbours
     %case hera_sensors_data:get_data(sonar) of
     case hera_sensors_data:get_recent_data(sonar) of
         {error, Reason} ->
-            logger:error(Reason),
-            error;
+            {error, Reason};
         {ok, Sonar} ->
             case hera_sensors_data:get_data(pos) of
                 {error, Reason} ->
-                    logger:error(Reason),
-                    error;
+                    {error, Reason};
                 {ok, Pos} ->
                     Nodes = lists:filter(fun(N) -> dict:is_key(N, Pos) end, dict:fetch_keys(Sonar)), % fetch all nodes from the recent sonar measurements of who we received the position
                     Values = [dict:fetch(Node, Sonar) || Node <- Nodes], 
@@ -135,18 +120,16 @@ calc_position(NodeId, MaxX, MaxY) -> % todo remove nodeId if not using neighbour
                                 {_, #{x := PosX1, y := PosY1, node_id := _NodeId1},_},
                                 {_, #{x := PosX2, y := PosY2, node_id := _NodeId2},_}
                             ] = [dict:fetch(Node, Pos) || Node <- Nodes],
-                            Res = filtered_trilateration({R1, PosX1, PosY1}, {R2, PosX2, PosY2}, MaxX, MaxY),
+                            Res = filtered_trilateration({R1, PosX1, PosY1}, {R2, PosX2, PosY2}, {MinX, MinY}, {MaxX, MaxY}),
                             case Res of
                                 {none, exceedBounds} ->
                                     {error, "Position not definable: no position that doesn't exceed imposed bounds~n"};
                                 {none, negativeRoot} ->
                                     {error, "Position not definable: square root of neg number~n"};
-                                {X1, Y1} -> 
-                                    Result = io_lib:format("x, ~.2f, y, ~.2f", [X1, Y1]),
-                                    {ok, Result};
+                                {X1, Y1} ->
+                                    {ok, [{X1, Y1}]};
                                 [{X1, Y1}, {X2, Y2}] ->  % 2 possible positions
-                                    Result = io_lib:format("x1, ~.2f, y1, ~.2f or x2, ~.2f, y2, ~.2f", [X1, Y1, X2, Y2]),
-                                    {ok, Result}
+                                    {ok, [{X1, Y1}, {X2, Y2}]}
                             end;
                         [{_Seq1, V1, _T1}, {_Seq2, V2, _T2}, {_Seq3, V3, _T3}] ->
                             [
@@ -154,20 +137,28 @@ calc_position(NodeId, MaxX, MaxY) -> % todo remove nodeId if not using neighbour
                                 {_, #{x := PosX2, y := PosY2, node_id := _NodeId2},_},
                                 {_, #{x := PosX3, y := PosY3, node_id := _NodeId3},_}
                             ] = [dict:fetch(Node, Pos) || Node <- Nodes],
-                            {X_p, Y_p} = trilateration({V1, PosX1, PosY1}, {V2, PosX2, PosY2}, {V3, PosX3, PosY3}),
-                            Result = io_lib:format("x, ~.2f, y, ~.2f", [X_p, Y_p]),
-                            {ok, Result};
+                            Res = filter_2_positions(trilateration({V1, PosX1, PosY1}, {V2, PosX2, PosY2}, {V3, PosX3, PosY3}), {-1.0,-1.0}, {MinX, MinY}, {MaxX, MaxY}),
+                            case Res of
+                                {none, exceedBounds} ->
+                                    {error, "Position not definable: no position that doesn't exceed imposed bounds~n"};
+                                {X1, Y1} ->
+                                    {ok, [{X1, Y1}]}
+                            end;
                         [{_, _, _}, {_, _, _}, {_, _, _}, {_, _, _}] ->
                             Neighbors = lists:filter(fun(N) -> neighbors(NodeId, dict:fetch(N, Pos)) end, Nodes),
-                            [{_Seq1, V1}, {_Seq2, V2}, {_Seq3, V3}] = [dict:fetch(Node, Sonar) || Node <- Neighbors],
+                            [{_Seq1, V1, _T1}, {_Seq2, V2, _T2}, {_Seq3, V3, _T3}] = [dict:fetch(Node, Sonar) || Node <- Neighbors],
                             [
                                 {_, #{x := PosX1, y := PosY1, node_id := _NodeId1},_},
                                 {_, #{x := PosX2, y := PosY2, node_id := _NodeId2},_},
                                 {_, #{x := PosX3, y := PosY3, node_id := _NodeId3},_}
                             ] = [dict:fetch(Node, Pos) || Node <- Neighbors],
-                            {X_p, Y_p} = trilateration({V1, PosX1, PosY1}, {V2, PosX2, PosY2}, {V3, PosX3, PosY3}),
-                            Result = io_lib:format("x, ~.2f, y, ~.2f", [X_p, Y_p]),
-                            {ok, Result};
+                            Res = filter_2_positions(trilateration({V1, PosX1, PosY1}, {V2, PosX2, PosY2}, {V3, PosX3, PosY3}), {-1.0,-1.0}, {MinX, MinY}, {MaxX, MaxY}),
+                            case Res of
+                                {none, exceedBounds} ->
+                                    {error, "Position not definable: no position that doesn't exceed imposed bounds~n"};
+                                {X1, Y1} ->
+                                    {ok, [{X1, Y1}]}
+                            end;
                         %[{_Seq1, V1, _T1}, {_Seq2, V2, _T2}, {_Seq3, V3, _T3}, {_Seq4, V4, _T4}] ->
                         %    [
                         %        {_, #{x := PosX1, y := PosY1, node_id := NodeId1},_},
@@ -196,12 +187,12 @@ calc_position(NodeId, MaxX, MaxY) -> % todo remove nodeId if not using neighbour
     end.
 
 % used by trilateration when only 2 sonar measures are available, and also when tracking 2 targets using 4 sonar measures.
-filtered_trilateration(Measure1, Measure2, MaxX, MaxY) -> 
+filtered_trilateration(Measure1, Measure2, {MinX, MinY}, {MaxX, MaxY}) ->
     try trilateration(Measure1, Measure2) of
         {A, A} ->
             A; % don't return twice the same position
         {A, B} ->
-            filter_2_positions(A, B, MaxX, MaxY)
+            filter_2_positions(A, B, {MinX, MinY}, {MaxX, MaxY})
     catch
         error:_ -> {none, negativeRoot} % no position possible
     end.
@@ -210,14 +201,14 @@ filtered_trilateration(Measure1, Measure2, MaxX, MaxY) ->
 % used by trilateration when only 2 sonar measures are available, and also when tracking 2 targets using 4 sonar measures.
 % when tracking 2 targets with 4 sonars, chosen sonars will be on a rectangle, and only contiguous pairs of sonars
 % will perform trilateration so that the ambiguity can be avoided by only considering valid the target positions inside that rectangle
-filter_2_positions({X1, Y1}=PosA, {X2, Y2}=PosB, MaxX, MaxY) ->
+filter_2_positions({X1, Y1}=PosA, {X2, Y2}=PosB, {MinX, MinY}, {MaxX, MaxY}) ->
     if
-        (0 =< X1 andalso X1 =< MaxX andalso 0 =< Y1 andalso Y1 =< MaxY) andalso 
-        (0 =< X2 andalso X2 =< MaxX andalso 0 =< Y2 andalso Y2 =< MaxY) ->
+        (MinX =< X1 andalso X1 =< MaxX andalso MinY =< Y1 andalso Y1 =< MaxY) andalso
+        (MinX =< X2 andalso X2 =< MaxX andalso MinY =< Y2 andalso Y2 =< MaxY) ->
             [PosA, PosB];
-        0 =< X1 andalso X1 =< MaxX andalso 0 =< Y1 andalso Y1 =< MaxY ->
+        MinX =< X1 andalso X1 =< MaxX andalso MinY =< Y1 andalso Y1 =< MaxY ->
             PosA;
-        0 =< X2 andalso X2 =< MaxX andalso 0 =< Y2 andalso Y2 =< MaxY ->
+        MinX =< X2 andalso X2 =< MaxX andalso MinY =< Y2 andalso Y2 =< MaxY ->
             PosB;
         true ->
             {none, exceedBounds} % none of the 2 positions respect the maxX and maxY limits
@@ -307,11 +298,6 @@ same_target({X1, Y1}, {X2, Y2}) ->
     DeltaY = Y1-Y2,
     math:sqrt(math:pow(DeltaX, 2) + math:pow(DeltaY, 2)) < 40.
 
-
-
-
-
-
 neighbors(NodeId, {_, #{node_id := Id}, _}) ->
     if
         Id =:= NodeId -> true;
@@ -320,3 +306,37 @@ neighbors(NodeId, {_, #{node_id := Id}, _}) ->
         true -> false
     end.
 
+%% @private
+%% @doc used for sonar measurements only.
+%% It returns true if the sonar measure has to be filtered out
+-spec(filter_sonar(PrevMeasureVal :: float(), CurrMeasureVal :: float(), DefaultMeasureVal :: float(), UpperBound :: float(), TimeDiff :: integer())->
+    boolean()).
+filter_sonar(CurrMeasureVal, PrevMeasureVal, TimeDiff, UpperBound, [DefaultMeasureVal]) ->
+    PrevIsBackDist = is_background_dist(PrevMeasureVal, DefaultMeasureVal),
+    IsDefDist = is_background_dist(CurrMeasureVal, DefaultMeasureVal),
+    IsDefDist orelse
+        (PrevIsBackDist == false andalso
+            abs(CurrMeasureVal - PrevMeasureVal) > UpperBound*TimeDiff). % 0.28*(100=TimeDiff) = 0.28*TimeDiff cm/TimeDiff ms
+
+
+%% @private
+%% @doc used for sonar measurements only.
+%% It returns true if the measure is equal to or greater than the distance measured during the warmup phase = the background distance
+-spec(is_background_dist(MeasureVal :: float(), DefaultMeasureVal :: float())->
+    boolean()).
+is_background_dist(MeasureVal, DefaultMeasureVal)->
+    if
+        DefaultMeasureVal * 0.95 =< MeasureVal ->
+            true;
+        true ->
+            false
+    end.
+
+filter_position(CurrVal, PrevVal, TimeDiff, UpperBound, _AddArgs) ->
+    AllCombinations = [{Prev, Curr} || Prev <- PrevVal, Curr <- CurrVal],
+    OkCombs = lists:filter(fun({{PrevX, PrevY}, {CurrX, CurrY}}) -> math:sqrt(math:pow(PrevX - CurrX, 2) + math:pow(PrevY - CurrY, 2)) < UpperBound*TimeDiff end, AllCombinations),
+    case length(OkCombs) of
+        0 -> true;
+        _ ->
+            lists:filter(fun(Val) -> lists:member(Val, [Curr|| {_Prev, Curr} <- OkCombs]) end, CurrVal)
+    end.

@@ -1,0 +1,3 @@
+stick of 1.5cm at position (x,y) = (230,190)
+
+analyse : stick only detected by board 2. The object if more on the center of the axe of the sonar of this board.

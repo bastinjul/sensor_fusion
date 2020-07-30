@@ -1,0 +1,3 @@
+Non moving human at position (230,190).
+
+analyse : only board 4 doesn't detect very well. human is facing between boards 1 and 4.
