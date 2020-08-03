@@ -1,11 +1,14 @@
 %--- Erlang Inet Configuration -------------------------------------------------
 
 % Add hosts
-{host, {169,254,126,125}, ["julienbastin"]}.
-{host, {169,254,16,1}, ["my_grisp_board_1"]}.
-{host, {169,254,16,2}, ["my_grisp_board_2"]}.
-{host, {169,254,16,3}, ["my_grisp_board_3"]}.
-{host, {169,254,16,4}, ["my_grisp_board_4"]}.
+{host, {192,168,43,239}, ["guigui-Inspiron-3583"]}. % gsm
+
+{host, {192,168,43,206}, ["my_grisp_board_1"]}. % gsm
+{host, {192,168,43,12}, ["my_grisp_board_2"]}. % gsm
+{host, {192,168,43,186}, ["my_grisp_board_3"]}. % gsm
+{host, {192,168,43,90}, ["my_grisp_board_4"]}. % gsm
+
+
 
 % Do not monitor the hosts file
 {hosts_file, ""}.
