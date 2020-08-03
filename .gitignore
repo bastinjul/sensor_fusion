@@ -18,9 +18,9 @@ _checkouts/
 rebar3.crashdump
 
 #logs
-logs/
-measures/
-calculations/
+/logs/
+/measures/
+/calculations/
 
 #idea
 .idea/
