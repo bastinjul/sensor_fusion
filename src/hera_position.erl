@@ -32,26 +32,15 @@
 %%% API
 %%%===================================================================
 
-%%--------------------------------------------------------------------
-%% @doc
-%% Launch hera with synchronization to follow a person in a room.
-%% In this case, a synchronization is performed between the measurement of the pmod_maxsonar in order to avoid cross-talking between them
-%%
-%% @param PosX The x coordinate of the board in the room
-%% @param PosY The y coordinate of the board in the room
-%% @param NodeId The id of the board. The first board must have NodeId = 0
-%%
-%%--------------------------------------------------------------------
-
-launch_hera(Frequency, MaxIteration) ->
+launch_hera(MaxIteration, Frequency) ->
     Measurements = [
         hera:get_unsynchronized_measurement(sonar, fun() -> sonar_measurement() end, fun(CurrVal, PrevVal, TimeDiff, UpperBound, DefaultMeas) -> filter_sonar(CurrVal, PrevVal, TimeDiff, UpperBound, DefaultMeas) end, 0.14, MaxIteration, Frequency)
     ],
-    Calculations = [], % no calculation
-    hera:launch_app(Measurements, Calculations).
+    hera:launch_app(Measurements, []).  % no calculation
 
-restart_measurement(MaxIterations, Frequency, DoFilter) ->
-    hera:restart_unsync_measurement(sonar, fun() -> sonar_measurement() end, Frequency, MaxIterations, DoFilter, false). % 1 sonar
+%FilterMeasurementFun = atom (no filter) or filter measurement function
+restart_measurement(MaxIterations, Frequency, FilterMeasurementFun) ->
+    hera:restart_unsync_measurement(sonar, fun() -> sonar_measurement() end, Frequency, MaxIterations, FilterMeasurementFun, false). % 1 sonar
 
 
 %%%===================================================================
@@ -61,8 +50,7 @@ restart_measurement(MaxIterations, Frequency, DoFilter) ->
 sonar_measurement() ->
     case pmod_maxsonar:get() of
         undefined -> {error, "pmod_maxsonar not set up correctly"};
-        Value ->
-            {ok, Value*2.54}
+        Value -> {ok, Value*2.54}
     end.
 
 
