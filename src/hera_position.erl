@@ -21,7 +21,9 @@
 -export([restart_measurement/1]).
 -export([restart/2]).
 -export([sonar_measurement/0]).
+-export([filter_sonar/5]).
 -export([filter_position/5]).
+-export([calc_position/3]).
 %%====================================================================
 %% Macros
 %%====================================================================
