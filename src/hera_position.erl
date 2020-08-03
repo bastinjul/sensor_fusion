@@ -14,7 +14,7 @@
 -module(hera_position).
 -author("Julien Bastin <julien.bastin@student.uclouvain.be>, Guillaume Neirinckx <guillaume.neirinckx@student.uclouvain.be>").
 
--export([launch_hera/7]).
+-export([launch_hera/2]).
 -export([restart_measurement/3]).
 -export([sonar_measurement/0]).
 %%====================================================================
@@ -43,7 +43,7 @@
 %%
 %%--------------------------------------------------------------------
 
-launch_hera(_PosX, _PosY, _NodeId, Frequency, MaxIteration, {_MinX, _MinY}, {_MaxX, _MaxY}) ->
+launch_hera(Frequency, MaxIteration) ->
     Measurements = [
         hera:get_unsynchronized_measurement(sonar, fun() -> sonar_measurement() end, fun(CurrVal, PrevVal, TimeDiff, UpperBound, DefaultMeas) -> filter_sonar(CurrVal, PrevVal, TimeDiff, UpperBound, DefaultMeas) end, 0.14, MaxIteration, Frequency)
     ],
