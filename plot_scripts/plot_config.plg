@@ -1,0 +1,12 @@
+set terminal png
+set output plotname
+set datafile separator ','
+set grid
+set title titlename
+set xlabel "x-axis"
+set ylabel "y-axis"
+set key center bmargin horizontal Left
+set style line 1 lc rgb 'blue' pt 5
+set style line 2 lc rgb 'red' pt 3
+unset key
+plot for [file in calcfiles] file using 2:3 t "object position" w p ls 1, '' using 4:5 w p ls 1, for [file in posfiles] file using 1:2 t "sonar" w p ls 2
