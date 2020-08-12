@@ -23,7 +23,7 @@
 -export([sonar_measurement/0]).
 -export([filter_sonar/5]).
 -export([filter_position/5]).
--export([calc_position/3]).
+-export([calc_position/4]).
 %%====================================================================
 %% Macros
 %%====================================================================
@@ -57,7 +57,7 @@ launch_hera(PosX, PosY, NodeId, {MinX, MinY}, {MaxX, MaxY}) ->
         hera:get_synchronized_measurement(sonar, fun() -> sonar_measurement() end, fun(CurrVal, PrevVal, TimeDiff, UpperBound, DefaultMeas) -> filter_sonar(CurrVal, PrevVal, TimeDiff, UpperBound, DefaultMeas) end, 0.14, infinity),
         hera:get_unsynchronized_measurement(pos, fun() -> {ok, #{x => PosX, y => PosY, node_id => NodeId}} end, undefined, 0.28, 3, 500)
     ],
-    Calculations = [hera:get_calculation(position, fun() -> calc_position(NodeId, {MinX, MinY}, {MaxX, MaxY}) end, 50, infinity, fun(CurrVal, PrevVal, TimeDiff, UpperBound, Args) -> filter_position(CurrVal, PrevVal, TimeDiff, UpperBound, Args) end, 0.28)],
+    Calculations = [hera:get_calculation(position, fun() -> calc_position(NodeId, {MinX, MinY}, {MaxX, MaxY}, 5) end, 50, infinity, fun(CurrVal, PrevVal, TimeDiff, UpperBound, Args) -> filter_position(CurrVal, PrevVal, TimeDiff, UpperBound, Args) end, 0.28)],
     hera:launch_app(Measurements, Calculations).
 
 launch_hera(PosX, PosY, NodeId, MaxIteration, {MinX, MinY}, {MaxX, MaxY}) ->
@@ -66,7 +66,7 @@ launch_hera(PosX, PosY, NodeId, MaxIteration, {MinX, MinY}, {MaxX, MaxY}) ->
         hera:get_synchronized_measurement(sonar, fun() -> sonar_measurement() end, fun(CurrVal, PrevVal, TimeDiff, UpperBound, DefaultMeas) -> filter_sonar(CurrVal, PrevVal, TimeDiff, UpperBound, DefaultMeas) end, 0.14, MaxIteration),
         hera:get_unsynchronized_measurement(pos, fun() -> {ok, #{x => PosX, y => PosY, node_id => NodeId}} end, undefined, 0.28, 3, 500)
     ],
-    Calculations = [hera:get_calculation(position, fun() -> calc_position(NodeId, {MinX, MinY}, {MaxX, MaxY}) end, 50, MaxIteration, fun(CurrVal, PrevVal, TimeDiff, UpperBound, Args) -> filter_position(CurrVal, PrevVal, TimeDiff, UpperBound, Args) end, 0.28)],
+    Calculations = [hera:get_calculation(position, fun() -> calc_position(NodeId, {MinX, MinY}, {MaxX, MaxY}, 5) end, 50, MaxIteration, fun(CurrVal, PrevVal, TimeDiff, UpperBound, Args) -> filter_position(CurrVal, PrevVal, TimeDiff, UpperBound, Args) end, 0.28)],
     hera:launch_app(Measurements, Calculations).
 
 launch_hera(PosX, PosY, NodeId, Frequency, MaxIteration, {MinX, MinY}, {MaxX, MaxY}) ->
@@ -74,7 +74,7 @@ launch_hera(PosX, PosY, NodeId, Frequency, MaxIteration, {MinX, MinY}, {MaxX, Ma
         hera:get_unsynchronized_measurement(sonar, fun() -> sonar_measurement() end, fun(CurrVal, PrevVal, TimeDiff, UpperBound, DefaultMeas) -> filter_sonar(CurrVal, PrevVal, TimeDiff, UpperBound, DefaultMeas) end, 0.14, MaxIteration, Frequency),
         hera:get_unsynchronized_measurement(pos, fun() -> {ok, #{x => PosX, y => PosY, node_id => NodeId}} end, undefined, 0.28, 3, 500)
     ],
-    Calculations = [hera:get_calculation(position, fun() -> calc_position(NodeId, {MinX, MinY}, {MaxX, MaxY}) end, 50, MaxIteration, fun(CurrVal, PrevVal, TimeDiff, UpperBound, Args) -> filter_position(CurrVal, PrevVal, TimeDiff, UpperBound, Args) end, 0.28)],
+    Calculations = [hera:get_calculation(position, fun() -> calc_position(NodeId, {MinX, MinY}, {MaxX, MaxY}, 5) end, 50, MaxIteration, fun(CurrVal, PrevVal, TimeDiff, UpperBound, Args) -> filter_position(CurrVal, PrevVal, TimeDiff, UpperBound, Args) end, 0.28)],
     %Calculations = [], % no calculation
     hera:launch_app(Measurements, Calculations).
 
@@ -102,7 +102,7 @@ sonar_measurement() ->
     end.
 
 
-calc_position(NodeId, {MinX, MinY}, {MaxX, MaxY}) -> % todo remove nodeId if not using neighbours
+calc_position(NodeId, {MinX, MinY}, {MaxX, MaxY}, NbBoards) -> % todo remove nodeId if not using neighbours
     %case hera_sensors_data:get_data(sonar) of
     case hera_sensors_data:get_recent_data(sonar) of
         {error, Reason} ->
@@ -147,7 +147,22 @@ calc_position(NodeId, {MinX, MinY}, {MaxX, MaxY}) -> % todo remove nodeId if not
                                     {ok, [{X1, Y1}]}
                             end;
                         [{_, _, _}, {_, _, _}, {_, _, _}, {_, _, _}] ->
-                            Neighbors = lists:filter(fun(N) -> neighbors(NodeId, dict:fetch(N, Pos)) end, Nodes),
+                            Neighbors = lists:filter(fun(N) -> neighbors(NodeId, dict:fetch(N, Pos), NbBoards) end, Nodes),
+                            [{_Seq1, V1, _T1}, {_Seq2, V2, _T2}, {_Seq3, V3, _T3}] = [dict:fetch(Node, Sonar) || Node <- Neighbors],
+                            [
+                                {_, #{x := PosX1, y := PosY1, node_id := _NodeId1},_},
+                                {_, #{x := PosX2, y := PosY2, node_id := _NodeId2},_},
+                                {_, #{x := PosX3, y := PosY3, node_id := _NodeId3},_}
+                            ] = [dict:fetch(Node, Pos) || Node <- Neighbors],
+                            Res = filter_2_positions(trilateration({V1, PosX1, PosY1}, {V2, PosX2, PosY2}, {V3, PosX3, PosY3}), {-1.0,-1.0}, {MinX, MinY}, {MaxX, MaxY}),
+                            case Res of
+                                {none, exceedBounds} ->
+                                    {error, "Position not definable: no position that doesn't exceed imposed bounds~n"};
+                                {X1, Y1} ->
+                                    {ok, [{X1, Y1}]}
+                            end;
+                        [{_, _, _}, {_, _, _}, {_, _, _}, {_, _, _}, {_, _, _}] ->
+                            Neighbors = lists:filter(fun(N) -> neighbors(NodeId, dict:fetch(N, Pos), NbBoards) end, Nodes),
                             [{_Seq1, V1, _T1}, {_Seq2, V2, _T2}, {_Seq3, V3, _T3}] = [dict:fetch(Node, Sonar) || Node <- Neighbors],
                             [
                                 {_, #{x := PosX1, y := PosY1, node_id := _NodeId1},_},
@@ -171,7 +186,7 @@ calc_position(NodeId, {MinX, MinY}, {MaxX, MaxY}) -> % todo remove nodeId if not
 %%                            Measures = [{NodeId1, {V1, PosX1, PosY1}}, {NodeId2, {V2, PosX2, PosY2}}, {NodeId3, {V3, PosX3, PosY3}}, {NodeId4, {V4, PosX4, PosY4}}],
 %%                            ContiguousMeasuresId = lists:sort(Measures), % abcd are ordered according to nodeId to ensure they represent circular traversal of sonars
 %%                            ContiguousMeasures = [element(2, E) || E <- ContiguousMeasuresId], % remove nodeid part and only keep the {V, PosX, PosY} tuple
-%%                            Res = trilaterations_2_objects(ContiguousMeasures, MaxX, MaxY),
+%%                            Res = trilaterations_2_objects(ContiguousMeasures, {MinX, MinY}, {MaxX, MaxY}),
 %%                            case Res of
 %%                                {none, exceedBounds} ->
 %%                                    {error, "No position found that doesn't violate MaxX and MaxY limits"};
@@ -248,8 +263,8 @@ trilateration({V1, X1, Y1}, {V2, X2, Y2}, {V3, X3, Y3}) ->
     {X_p, Y_p}.
 
 %test:trilateration({math:sqrt(8), 0, 0}, {math:sqrt(8), 0, 4},{math:sqrt(8), 10, 4}, {math:sqrt(8), 10, 0}, 10, 4). gives 8,2 and 2,2 when max dist < 4
-trilaterations_2_objects(Measures, MaxX, MaxY) ->
-    PosL = get_contiguous_pairs_positions(Measures, hd(Measures), [], MaxX, MaxY),
+trilaterations_2_objects(Measures, {MinX, MinY}, {MaxX, MaxY}) ->
+    PosL = get_contiguous_pairs_positions(Measures, hd(Measures), [], {MinX, MinY}, {MaxX, MaxY}),
     case PosL of
         [] -> 
             {none, exceedBounds};
@@ -261,13 +276,13 @@ trilaterations_2_objects(Measures, MaxX, MaxY) ->
 
 
 % returns the positions of all targets detected using a pair of sonars each time, 4 sonars -> 4 contiguous pairs of sonars
-get_contiguous_pairs_positions([LastMeasure], FirstMeasure, PosL, MaxX, MaxY) ->
-    Pos = filtered_trilateration(LastMeasure, FirstMeasure, MaxX, MaxY), % only 1 pos should be received, because sonars with these 2 measures are contiguous
+get_contiguous_pairs_positions([LastMeasure], FirstMeasure, PosL, {MinX, MinY}, {MaxX, MaxY}) ->
+    Pos = filtered_trilateration(LastMeasure, FirstMeasure, {MinX, MinY}, {MaxX, MaxY}), % only 1 pos should be received, because sonars with these 2 measures are contiguous
     add_to_position_list(Pos, PosL);
-get_contiguous_pairs_positions([Measure|MeasureL], FirstMeasure, PosL, MaxX, MaxY) -> % measureL length > 1
-    Pos = filtered_trilateration(Measure, hd(MeasureL), MaxX, MaxY),
+get_contiguous_pairs_positions([Measure|MeasureL], FirstMeasure, PosL, {MinX, MinY}, {MaxX, MaxY}) -> % measureL length > 1
+    Pos = filtered_trilateration(Measure, hd(MeasureL), {MinX, MinY}, {MaxX, MaxY}),
     PosL2 = add_to_position_list(Pos, PosL),
-    get_contiguous_pairs_positions(MeasureL, FirstMeasure, PosL2, MaxX, MaxY).
+    get_contiguous_pairs_positions(MeasureL, FirstMeasure, PosL2, {MinX, MinY}, {MaxX, MaxY}).
     
 % add the position to the list of positions.
 add_to_position_list(Pos, PosL) ->
@@ -298,11 +313,11 @@ same_target({X1, Y1}, {X2, Y2}) ->
     DeltaY = Y1-Y2,
     math:sqrt(math:pow(DeltaX, 2) + math:pow(DeltaY, 2)) < 40.
 
-neighbors(NodeId, {_, #{node_id := Id}, _}) ->
+neighbors(NodeId, {_, #{node_id := Id}, _}, NbBoards) ->
     if
         Id =:= NodeId -> true;
-        Id =:= (NodeId + 4 + 1) rem 4 -> true;
-        Id =:= (NodeId + 4 - 1) rem 4 -> true;
+        Id =:= (NodeId + NbBoards + 1) rem NbBoards -> true;
+        Id =:= (NodeId + NbBoards - 1) rem NbBoards -> true;
         true -> false
     end.
 
